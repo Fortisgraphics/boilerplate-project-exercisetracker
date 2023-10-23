@@ -9,13 +9,12 @@ const Exercise = require("./models/exercise");
 
 app.use(cors());
 app.use(express.static("public"));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
 });
 
 // We create a new user by sending a post with /api/users
-
 app.post("/api/users", async (req, res) => {
   try {
     if (!req.body.username) {
@@ -89,6 +88,8 @@ app.get("/api/users/:_id/logs", async (req, res) => {
         userExercises = userExercises.splice(0, Number(limit));
       }
 
+      const count = userExercises.length;
+
       let exerciseList = userExercises.map(
         ({ description, duration, date }) => {
           return {
@@ -98,8 +99,6 @@ app.get("/api/users/:_id/logs", async (req, res) => {
           };
         },
       );
-
-      const count = userExercises.length;
 
       return res.status(200).json({
         username: username,

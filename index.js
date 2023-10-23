@@ -3,7 +3,6 @@ const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
-
 // Getting the Modules
 const User = require("./models/user");
 const Exercise = require("./models/exercise");
@@ -32,32 +31,28 @@ app.post("/api/users", async (req, res) => {
 });
 
 // We add an exercises to by a user, that was create or existed already
-app.post("/api/users/:id/exercises", async (req, res) => {
+app.post("/api/users/:_id/exercises", async (req, res) => {
   try {
     const userId = req.body[":_id"] || req.body._id;
-    let user = await User.findById({ _id: userId });
-    const date = req.body.date;
-    let currentDate = new Date().toDateString();
-
-    if (date) {
-      currentDate = new Date(date).toDateString();
-    }
+    let user = await User.findOne({ _id: userId });
+    const { description, duration, date } = req.body;
 
     if (user) {
-      const newExercise = new Exercise({
-        username: user.username,
-        description: req.body.description,
-        duration: req.body.duration,
-        date: currentDate,
-      });
+      const newExercise = {
+        userId: userId,
+        description: description,
+        duration: duration,
+        date: date ? new Date(date).toDateString() : new Date().toDateString(),
+      };
 
-      newExercise.save();
+      const CreatedEx = await Exercise.create(newExercise);
+
       return res.status(200).json({
+        username: user.username,
+        description: CreatedEx.description,
+        duration: CreatedEx.duration,
+        date: CreatedEx.date,
         _id: userId,
-        username: newExercise.username,
-        description: newExercise.description,
-        duration: newExercise.duration,
-        date: newExercise.date,
       });
     } else {
       return res.status(402).json({ message: "user with id not found" });
@@ -68,27 +63,81 @@ app.post("/api/users/:id/exercises", async (req, res) => {
 });
 
 // Get list of exercisefrom a User
-app.get('/api/users/:_id/logs', (req, res)=>{
-  try{
-    const {id} = req.params;
-    const userExercise = await Exercise.findById({_id: id})
+app.get("/api/users/:_id/logs", async (req, res) => {
+  try {
+    const { from, to, limit } = req.query;
+    const _id = req.params._id;
+    const foundUser = await User.findOne({ _id: _id });
 
-  } catch(e){
+    if (foundUser._id) {
+      const { username, _id } = foundUser;
+      let userExercises = await Exercise.find({ userId: _id });
 
+      if (from) {
+        let pastDate = new Date(from);
+        userExercises = userExercises.filter(
+          (exercise) => new Date(exercise.date) >= pastDate,
+        );
+      }
+      if (to) {
+        let presentDate = new Date(to);
+        userExercises = userExercises.filter(
+          (exercise) => new Date(exercise.date) <= presentDate,
+        );
+      }
+      if (limit) {
+        userExercises = userExercises.splice(0, Number(limit));
+      }
+
+      let exerciseList = userExercises.map(
+        ({ description, duration, date }) => {
+          return {
+            description: description,
+            duration: duration,
+            date: date,
+          };
+        },
+      );
+
+      const count = userExercises.length;
+
+      return res.status(200).json({
+        username: username,
+        count: count,
+        _id: _id,
+        log: exerciseList,
+      });
+    } else {
+      return res.status(402).json({ message: "User Not Found" });
+    }
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ Error: "Could not Load Data" });
   }
-})
-
-
+});
 
 // Getting the list of all users
 app.get("/api/users", async (req, res) => {
   try {
     const users = await User.find({});
     return res.status(200).json(users);
-  } catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-const listener = app.listen(process.env.PORT || 3000, () => {
+// Getting the list of all exercise
+
+app.get("/api/exercises", async (req, res) => {
+  try {
+    const exercises = await Exercise.find({});
+    return res.status(200).json(exercises);
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+const listener = app.listen(process.env.PORT || 3005, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
 

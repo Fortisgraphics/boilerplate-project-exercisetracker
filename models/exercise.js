@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const exerciseSchema = mongoose.Schema({
-  username: {
+  userId: {
     type: String,
-    required: true,
+    required: [true, "Must include a userId"],
   },
   description: {
     type: String,
@@ -14,7 +14,7 @@ const exerciseSchema = mongoose.Schema({
   },
   date: {
     type: String,
-    // default: Date.now()
+    default: new Date().toDateString(),
   },
 });
 

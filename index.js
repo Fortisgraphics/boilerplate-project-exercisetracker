@@ -34,7 +34,7 @@ app.post("/api/users", async (req, res) => {
 app.post("/api/users/:_id/exercises", async (req, res) => {
   try {
     const userId = req.body[":_id"] || req.body._id;
-    let user = await User.findOne({ _id: userId });
+    const user = await User.findOne({ _id: userId });
     const { description, duration, date } = req.body;
 
     if (user) {
@@ -55,7 +55,7 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
         _id: userId,
       });
     } else {
-      return res.status(402).json({ message: "user with id not found" });
+      return res.status(400).json({ message: "user with id not found" });
     }
   } catch (e) {
     console.log(e);
@@ -108,7 +108,7 @@ app.get("/api/users/:_id/logs", async (req, res) => {
         log: exerciseList,
       });
     } else {
-      return res.status(402).json({ message: "User Not Found" });
+      return res.status(400).json({ message: "User Not Found" });
     }
   } catch (e) {
     console.error(e);

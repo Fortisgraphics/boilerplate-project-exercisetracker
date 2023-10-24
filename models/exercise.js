@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const exerciseSchema = mongoose.Schema({
   userId: {
     type: String,
